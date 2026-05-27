@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar Sesión - Quiniela Mundial 2026</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="auth-body">
+  <div class="auth-container">
+    <div class="auth-card card">
+      <div class="auth-header">
+        <h1>⚽ FIFA World Cup 2026</h1>
+        <p>Quiniela</p>
+      </div>
+
+      <div id="loginForm">
+        <div class="form-group">
+          <label for="loginUsername">Usuario</label>
+          <input type="text" id="loginUsername" class="input" placeholder="Ingresa tu usuario" autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Contraseña</label>
+          <input type="password" id="loginPassword" class="input" placeholder="Ingresa tu contraseña" autocomplete="current-password">
+        </div>
+        <button class="btn btn-primary btn-block" id="loginBtn">Iniciar Sesión</button>
+        <p class="auth-switch">¿No tienes cuenta? <a href="#" id="showRegister">Regístrate aquí</a></p>
+        <div id="loginError" class="auth-error"></div>
+      </div>
+
+      <div id="registerForm" style="display:none;">
+        <div class="form-group">
+          <label for="regUsername">Usuario*</label>
+          <input type="text" id="regUsername" class="input" placeholder="Elige un usuario">
+        </div>
+        <div class="form-group">
+          <label for="regPassword">Contraseña* (mín. 3 caracteres)</label>
+          <input type="password" id="regPassword" class="input" placeholder="Elige una contraseña">
+        </div>
+        <div class="form-group">
+          <label for="regWhatsapp">WhatsApp*</label>
+          <input type="text" id="regWhatsapp" class="input" placeholder="ej. 5511999999999">
+        </div>
+        <button class="btn btn-primary btn-block" id="registerBtn">Registrarse</button>
+        <p class="auth-switch">¿Ya registrado? <a href="#" id="showLogin">Inicia sesión aquí</a></p>
+        <div id="registerError" class="auth-error"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="constants.js"></script>
+  <script src="helpers.js"></script>
+  <script src="api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async function () {
+      try {
+        await API.initData();
+      } catch (e) {
+        document.getElementById('loginError').textContent = 'Error al cargar la aplicación. Verifica que los archivos JSON existan.';
+        return;
+      }
+
+      if (API.isLoggedIn()) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      document.getElementById('showRegister').addEventListener('click', function (e) {
+        e.preventDefault();
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('registerForm').style.display = 'block';
+        document.getElementById('loginError').textContent = '';
+      });
+
+      document.getElementById('showLogin').addEventListener('click', function (e) {
+        e.preventDefault();
+        document.getElementById('registerForm').style.display = 'none';
+        document.getElementById('loginForm').style.display = 'block';
+        document.getElementById('registerError').textContent = '';
+      });
+
+      document.getElementById('loginBtn').addEventListener('click', function () {
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const errorEl = document.getElementById('loginError');
+
+        if (!username || !password) {
+          errorEl.textContent = 'Ingresa usuario y contraseña';
+          return;
+        }
+
+        const result = API.login(username, password);
+        if (result.success) {
+          window.location.href = 'index.html';
+        } else {
+          errorEl.textContent = result.error;
+        }
+      });
+
+      document.getElementById('loginPassword').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') document.getElementById('loginBtn').click();
+      });
+
+      document.getElementById('registerBtn').addEventListener('click', function () {
+        const username = document.getElementById('regUsername').value.trim();
+        const password = document.getElementById('regPassword').value;
+        const whatsapp = document.getElementById('regWhatsapp').value.trim();
+        const errorEl = document.getElementById('registerError');
+
+        const result = API.registerUser({ username: username, password: password, whatsapp: whatsapp });
+        if (result.success) {
+          errorEl.style.color = 'var(--success)';
+          errorEl.textContent = '¡Registro exitoso! Ahora puedes iniciar sesión.';
+          document.getElementById('registerForm').style.display = 'none';
+          document.getElementById('loginForm').style.display = 'block';
+          document.getElementById('loginUsername').value = username;
+        } else {
+          errorEl.style.color = 'var(--danger)';
+          errorEl.textContent = result.error;
+        }
+      });
+    });
+  </script>
+</body>
+</html>

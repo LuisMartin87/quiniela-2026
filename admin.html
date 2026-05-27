@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Quiniela Mundial 2026</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="adminNav"></div>
+  <div id="toastContainer"></div>
+
+  <div id="modalOverlay" class="modal-overlay" onclick="if(event.target===this)UI.closeModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle"></h3>
+        <button class="modal-close" onclick="UI.closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <main class="container">
+    <h2>🔧 Panel de Administración</h2>
+
+    <div class="admin-tabs">
+      <button class="admin-tab admin-tab-active" data-admin-tab="users">Usuarios</button>
+      <button class="admin-tab" data-admin-tab="matches">Partidos</button>
+      <button class="admin-tab" data-admin-tab="results">Resultados</button>
+      <button class="admin-tab" data-admin-tab="rounds">Rondas</button>
+      <button class="admin-tab" data-admin-tab="players">Jugadores</button>
+      <button class="admin-tab" data-admin-tab="specials">Especiales Oficiales</button>
+      <button class="admin-tab" data-admin-tab="settings">Configuración</button>
+      <button class="admin-tab" data-admin-tab="danger">⚠️ Zona de Peligro</button>
+    </div>
+
+    <div id="adminContent" class="admin-content"></div>
+  </main>
+
+  <script src="constants.js"></script>
+  <script src="helpers.js"></script>
+  <script src="api.js"></script>
+  <script src="ui.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async function () {
+      try {
+        await API.initData();
+      } catch (e) {
+        document.body.innerHTML = '<div class="error-screen"><h1>⚠️ Error</h1><p>' + e.message + '</p></div>';
+        return;
+      }
+
+      if (!API.isLoggedIn()) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      if (!API.isAdmin()) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      setupAdminNav();
+      switchAdminTab('users');
+      setupAdminTabs();
+      setupLogout();
+    });
+
+    function setupAdminNav() {
+      const nav = document.getElementById('adminNav');
+      const user = API.getCurrentUser();
+      nav.innerHTML = `
+        <nav class="navbar">
+          <div class="nav-brand">⚽ Panel Admin</div>
+          <div class="nav-menu nav-menu-open">
+            <a href="index.html" class="nav-link">← Volver a la App</a>
+            <span class="nav-user">👤 ${user.username}</span>
+            <button class="btn btn-sm btn-outline" id="logoutBtn">Salir</button>
+          </div>
+        </nav>
+      `;
+    }
+
+    function setupLogout() {
+      document.addEventListener('click', function (e) {
+        if (e.target.id === 'logoutBtn') {
+          API.logout();
+          window.location.href = 'login.html';
+        }
+      });
+    }
+
+    function setupAdminTabs() {
+      document.querySelectorAll('.admin-tab').forEach(tab => {
+        tab.addEventListener('click', function () {
+          document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('admin-tab-active'));
+          this.classList.add('admin-tab-active');
+          switchAdminTab(this.dataset.adminTab);
+        });
+      });
+    }
+
+    function switchAdminTab(tab) {
+      const container = document.getElementById('adminContent');
+      UI.showLoading('adminContent');
+
+      setTimeout(function () {
+        switch (tab) {
+          case 'users': renderAdminUsers(); break;
+          case 'matches': renderAdminMatches(); break;
+          case 'results': renderAdminResults(); break;
+          case 'rounds': renderAdminRounds(); break;
+          case 'specials': renderAdminSpecials(); break;
+          case 'players': renderAdminPlayers(); break;
+          case 'settings': renderAdminSettings(); break;
+          case 'danger': renderAdminDanger(); break;
+        }
+      }, 100);
+    }
+
+    /* ── Admin: Usuarios ── */
+
+    function renderAdminUsers() {
+      const container = document.getElementById('adminContent');
+      const users = API.getUsers();
+
+      let html = '<div class="admin-section"><h3>👥 Gestionar Usuarios</h3>';
+      html += '<button class="btn btn-primary" id="showAddUserForm">+ Agregar Usuario</button>';
+      html += '<div id="addUserForm" style="display:none;" class="card mt-1"><div class="card-body">';
+      html += '<div class="form-row">';
+      html += '<div class="form-group"><label>Usuario</label><input type="text" id="auUsername" class="input"></div>';
+      html += '<div class="form-group"><label>Contraseña</label><input type="text" id="auPassword" class="input" value="1234"></div>';
+      html += '<div class="form-group"><label>WhatsApp</label><input type="text" id="auWhatsapp" class="input"></div>';
+      html += '</div>';
+      html += '<div class="form-row">';
+      html += '<label class="checkbox-label"><input type="checkbox" id="auActive" checked> Activo</label>';
+      html += '<label class="checkbox-label"><input type="checkbox" id="auPaid"> Pagado</label>';
+      html += '<label class="checkbox-label"><input type="checkbox" id="auAdmin"> Admin</label>';
+      html += '</div>';
+      html += '<button class="btn btn-primary" id="saveNewUser">Crear Usuario</button>';
+      html += '</div></div>';
+
+      html += '<div class="table-responsive mt-1"><table class="table"><thead><tr>';
+      html += '<th>ID</th><th>Usuario</th><th>WhatsApp</th><th>Activo</th><th>Pagado</th><th>Admin</th><th>Acciones</th>';
+      html += '</tr></thead><tbody>';
+
+      users.forEach(u => {
+        html += '<tr>';
+        html += '<td>' + u.id + '</td>';
+        html += '<td>' + u.username + '</td>';
+        html += '<td>' + u.whatsapp + '</td>';
+        html += '<td>' + (u.active ? '✅' : '❌') + '</td>';
+        html += '<td>' + (u.paid ? '✅' : '❌') + '</td>';
+        html += '<td>' + (u.admin ? '✅' : '') + '</td>';
+        html += '<td class="action-cell">';
+        html += '<button class="btn btn-sm ' + (u.active ? 'btn-warning' : 'btn-success') + '" data-user-id="' + u.id + '" data-action="toggle-active">' + (u.active ? 'Desactivar' : 'Activar') + '</button> ';
+        html += '<button class="btn btn-sm ' + (u.paid ? 'btn-warning' : 'btn-success') + '" data-user-id="' + u.id + '" data-action="toggle-paid">' + (u.paid ? 'Desmarcar Pago' : 'Marcar Pagado') + '</button>';
+        html += '</td>';
+        html += '</tr>';
+      });
+
+      html += '</tbody></table></div></div>';
+      container.innerHTML = html;
+
+      document.getElementById('showAddUserForm').addEventListener('click', function () {
+        const f = document.getElementById('addUserForm');
+        f.style.display = f.style.display === 'none' ? 'block' : 'none';
+      });
+
+      document.getElementById('saveNewUser').addEventListener('click', function () {
+        const result = API.createUser({
+          username: document.getElementById('auUsername').value.trim(),
+          password: document.getElementById('auPassword').value,
+          whatsapp: document.getElementById('auWhatsapp').value.trim(),
+          active: document.getElementById('auActive').checked,
+          paid: document.getElementById('auPaid').checked,
+          admin: document.getElementById('auAdmin').checked
+        });
+        if (result.success) {
+          UI.showToast('¡Usuario creado!', 'success');
+          renderAdminUsers();
+        } else {
+          UI.showToast(result.error, 'error');
+        }
+      });
+
+      container.querySelectorAll('[data-action]').forEach(btn => {
+        btn.addEventListener('click', function () {
+          const userId = parseInt(this.dataset.userId);
+          const action = this.dataset.action;
+          if (action === 'toggle-active') {
+            const user = API.getUserById(userId);
+            API.updateUserStatus(userId, { active: !user.active });
+            UI.showToast('Estado de usuario actualizado', 'success');
+            renderAdminUsers();
+          } else if (action === 'toggle-paid') {
+            const user = API.getUserById(userId);
+            API.updateUserStatus(userId, { paid: !user.paid });
+            UI.showToast('Estado de pago actualizado', 'success');
+            renderAdminUsers();
+          }
+        });
+      });
+    }
+
+    /* ── Admin: Partidos ── */
+
+    function renderAdminMatches() {
+      const container = document.getElementById('adminContent');
+      const matches = API.getMatches();
+
+      let html = '<div class="admin-section"><h3>⚽ Gestionar Partidos</h3>';
+      html += '<button class="btn btn-primary" id="showAddMatchForm">+ Agregar Partido</button>';
+      html += '<div id="addMatchForm" style="display:none;" class="card mt-1"><div class="card-body">';
+      html += '<div class="form-row">';
+      html += '<div class="form-group"><label>Equipo Local</label><input type="text" id="amHome" class="input"></div>';
+      html += '<div class="form-group"><label>Equipo Visitante</label><input type="text" id="amAway" class="input"></div>';
+      html += '</div>';
+      html += '<div class="form-row">';
+      html += '<div class="form-group"><label>Ronda</label><select id="amRound" class="input">';
+      for (let i = 1; i <= 8; i++) {
+        html += '<option value="' + i + '">' + Helpers.getRoundName(i) + '</option>';
+      }
+      html += '</select></div>';
+      html += '<div class="form-group"><label>Fecha y Hora</label><input type="datetime-local" id="amDate" class="input"></div>';
+      html += '</div>';
+      html += '<button class="btn btn-primary" id="saveNewMatch">Crear Partido</button>';
+      html += '</div></div>';
+
+      html += '<div class="table-responsive mt-1"><table class="table"><thead><tr>';
+      html += '<th>ID</th><th>Ronda</th><th>Local</th><th>Visitante</th><th>Fecha</th><th>Estado</th><th>Acciones</th>';
+      html += '</tr></thead><tbody>';
+
+      matches.forEach(m => {
+        html += '<tr>';
+        html += '<td>' + m.id + '</td>';
+        html += '<td>' + Helpers.getRoundName(m.round) + '</td>';
+        html += '<td>' + m.homeTeam + '</td>';
+        html += '<td>' + m.awayTeam + '</td>';
+        html += '<td>' + Helpers.formatDateTime(m.dateISO) + '</td>';
+        html += '<td>' + Helpers.getStatusBadge(m.status) + '</td>';
+        html += '<td class="action-cell">';
+        html += '<button class="btn btn-sm btn-outline edit-match-btn" data-match-id="' + m.id + '">Editar</button>';
+        html += '</td>';
+        html += '</tr>';
+      });
+
+      html += '</tbody></table></div></div>';
+      container.innerHTML = html;
+
+      document.getElementById('showAddMatchForm').addEventListener('click', function () {
+        const f = document.getElementById('addMatchForm');
+        f.style.display = f.style.display === 'none' ? 'block' : 'none';
+      });
+
+      document.getElementById('saveNewMatch').addEventListener('click', function () {
+        const home = document.getElementById('amHome').value.trim();
+        const away = document.getElementById('amAway').value.trim();
+        const round = parseInt(document.getElementById('amRound').value);
+        const dateStr = document.getElementById('amDate').value;
+
+        if (!home || !away) { UI.showToast('Ingresa los nombres de los equipos', 'error'); return; }
+        if (!dateStr) { UI.showToast('Ingresa la fecha y hora', 'error'); return; }
+
+        const result = API.createMatch({
+          round: round,
+          dateISO: new Date(dateStr).toISOString(),
+          homeTeam: home,
+          awayTeam: away
+        });
+        if (result.success) {
+          UI.showToast('¡Partido creado!', 'success');
+          renderAdminMatches();
+        } else {
+          UI.showToast(result.error, 'error');
+        }
+      });
+
+      container.querySelectorAll('.edit-match-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+          const matchId = parseInt(this.dataset.matchId);
+          const match = API.getMatchById(matchId);
+          if (!match) return;
+
+          const localDate = match.dateISO.slice(0, 16);
+          UI.showModal('Editar Partido', `
+            <div class="form-group"><label>Equipo Local</label><input type="text" id="emHome" class="input" value="${match.homeTeam}"></div>
+            <div class="form-group"><label>Equipo Visitante</label><input type="text" id="emAway" class="input" value="${match.awayTeam}"></div>
+            <div class="form-group"><label>Ronda</label><select id="emRound" class="input">
+              ${[1,2,3,4,5,6,7,8].map(r => '<option value="' + r + '" ' + (r === match.round ? 'selected' : '') + '>' + Helpers.getRoundName(r) + '</option>').join('')}
+            </select></div>
+            <div class="form-group"><label>Fecha y Hora</label><input type="datetime-local" id="emDate" class="input" value="${localDate}"></div>
+            <div class="form-group"><label>Estado</label><select id="emStatus" class="input">
+              <option value="pending" ${match.status === 'pending' ? 'selected' : ''}>Pendiente</option>
+              <option value="live" ${match.status === 'live' ? 'selected' : ''}>En Vivo</option>
+              <option value="finished" ${match.status === 'finished' ? 'selected' : ''}>Finalizado</option>
+            </select></div>
+            <button class="btn btn-primary" id="saveEditMatch">Actualizar Partido</button>
+          `);
+
+          document.getElementById('saveEditMatch').addEventListener('click', function () {
+            const dateVal = document.getElementById('emDate').value;
+            API.updateMatch({
+              id: matchId,
+              homeTeam: document.getElementById('emHome').value.trim(),
+              awayTeam: document.getElementById('emAway').value.trim(),
+              round: parseInt(document.getElementById('emRound').value),
+              dateISO: new Date(dateVal).toISOString(),
+              status: document.getElementById('emStatus').value
+            });
+            UI.closeModal();
+            UI.showToast('¡Partido actualizado!', 'success');
+            renderAdminMatches();
+          });
+        });
+      });
+    }
+
+    /* ── Admin: Resultados ── */
+
+    function renderAdminResults() {
+      const container = document.getElementById('adminContent');
+      const matches = API.getMatches();
+      const results = API.getResults();
+
+      let html = '<div class="admin-section"><h3>📋 Enviar Resultados</h3>';
+      html += '<div class="table-responsive"><table class="table"><thead><tr>';
+      html += '<th>Partido</th><th>Ronda</th><th>Estado</th><th>Resultado</th><th>Acciones</th>';
+      html += '</tr></thead><tbody>';
+
+      matches.forEach(m => {
+        const result = results.find(r => r.matchId === m.id);
+        html += '<tr>';
+        html += '<td>' + m.homeTeam + ' vs ' + m.awayTeam + '</td>';
+        html += '<td>' + Helpers.getRoundName(m.round) + '</td>';
+        html += '<td>' + Helpers.getStatusBadge(m.status) + '</td>';
+        html += '<td>' + (result ? result.homeScore + ' - ' + result.awayScore : 'No fijado') + '</td>';
+        html += '<td class="action-cell">';
+        html += '<button class="btn btn-sm btn-primary set-result-btn" data-match-id="' + m.id + '" data-home="' + m.homeTeam + '" data-away="' + m.awayTeam + '">' + (result ? 'Editar' : 'Fijar Resultado') + '</button>';
+        if (result) {
+          html += ' <button class="btn btn-sm btn-danger clear-result-btn" data-match-id="' + m.id + '">Limpiar</button>';
+        }
+        html += '</td>';
+        html += '</tr>';
+      });
+
+      html += '</tbody></table></div></div>';
+      container.innerHTML = html;
+
+      container.querySelectorAll('.set-result-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+          const matchId = parseInt(this.dataset.matchId);
+          const home = this.dataset.home;
+          const away = this.dataset.away;
+          const existing = API.getResultByMatchId(matchId);
+
+          UI.showModal('Fijar Resultado: ' + home + ' vs ' + away, `
+            <div class="form-row">
+              <div class="form-group"><label>${home}</label><input type="number" id="resHome" class="input" min="0" max="30" value="${existing ? existing.homeScore : ''}"></div>
+              <div class="form-group"><label>${away}</label><input type="number" id="resAway" class="input" min="0" max="30" value="${existing ? existing.awayScore : ''}"></div>
+            </div>
+            <button class="btn btn-primary" id="saveResultBtn">Guardar Resultado</button>
+          `);
+
+          document.getElementById('saveResultBtn').addEventListener('click', function () {
+            const h = parseInt(document.getElementById('resHome').value);
+            const a = parseInt(document.getElementById('resAway').value);
+            if (isNaN(h) || isNaN(a)) { UI.showToast('Ingresa ambos marcadores', 'error'); return; }
+            API.saveResult(matchId, h, a);
+            UI.closeModal();
+            UI.showToast('¡Resultado guardado!', 'success');
+            renderAdminResults();
+          });
+        });
+      });
+
+      container.querySelectorAll('.clear-result-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+          const matchId = parseInt(this.dataset.matchId);
+          if (confirm('¿Limpiar este resultado? El partido volverá a estado pendiente.')) {
+            API.clearResult(matchId);
+            UI.showToast('Resultado eliminado', 'success');
+            renderAdminResults();
+          }
+        });
+      });
+    }
+
+    /* ── Admin: Rondas ── */
+
+    function renderAdminRounds() {
+      const container = document.getElementById('adminContent');
+      const rounds = API.getRounds();
+
+      let html = '<div class="admin-section"><h3>🔒 Gestión de Rondas</h3>';
+      html += '<p class="text-muted">Abre o cierra rondas manualmente. Las rondas se bloquean automáticamente 10 minutos antes del primer partido.</p>';
+      html += '<div class="table-responsive"><table class="table"><thead><tr>';
+      html += '<th>Ronda</th><th>Estado</th><th>Acciones</th>';
+      html += '</tr></thead><tbody>';
+
+      rounds.forEach(r => {
+        const status = API.getRoundStatus(r);
+        html += '<tr>';
+        html += '<td>' + Helpers.getRoundName(r) + '</td>';
+        html += '<td>' + Helpers.getStatusBadge(status) + '</td>';
+        html += '<td class="action-cell">';
+        if (status !== APP.ROUND_STATUS.OPEN) {
+          html += '<button class="btn btn-sm btn-success open-round-btn" data-round="' + r + '">Abrir</button> ';
+        }
+        if (status === APP.ROUND_STATUS.OPEN) {
+          html += '<button class="btn btn-sm btn-warning close-round-btn" data-round="' + r + '">Cerrar</button>';
+        }
+        html += '</td>';
+        html += '</tr>';
+      });
+
+      html += '</tbody></table></div></div>';
+      container.innerHTML = html;
+
+      container.querySelectorAll('.open-round-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+          const round = parseInt(this.dataset.round);
+          API.openRound(round);
+          UI.showToast('Ronda ' + Helpers.getRoundName(round) + ' abierta', 'success');
+          renderAdminRounds();
+        });
+      });
+
+      container.querySelectorAll('.close-round-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+          const round = parseInt(this.dataset.round);
+          API.closeRound(round);
+          UI.showToast('Ronda ' + Helpers.getRoundName(round) + ' cerrada', 'success');
+          renderAdminRounds();
+        });
+      });
+    }
+
+    /* ── Admin: Jugadores ── */
+
+    function renderAdminPlayers() {
+      const container = document.getElementById('adminContent');
+      const playersByTeam = API.getPlayers();
+      const teamsWithPlayers = playersByTeam.filter(function (t) { return t.players.length > 0; });
+      const teamsEmpty = playersByTeam.filter(function (t) { return t.players.length === 0; });
+
+      let html = '<div class="admin-section"><h3>👥 Jugadores del Torneo</h3>';
+      html += '<p class="text-muted">Lista de jugadores de todas las selecciones. Los nombres aquí listados son los válidos para las predicciones de Goleador y Balón de Oro.</p>';
+
+      html += '<button class="btn btn-primary" id="showAddPlayerForm">+ Agregar Jugador</button>';
+      html += '<div id="addPlayerForm" style="display:none;" class="card mt-1"><div class="card-body">';
+      html += '<div class="form-row">';
+      html += '<div class="form-group"><label>Nombre del Jugador</label><input type="text" id="apName" class="input" placeholder="ej. Vinicius Junior"></div>';
+      html += '<div class="form-group"><label>Selección</label><select id="apTeam" class="input">';
+      playersByTeam.forEach(function (t) {
+        html += '<option value="' + t.team + '">' + t.team + '</option>';
+      });
+      html += '</select></div></div>';
+      html += '<button class="btn btn-primary" id="saveNewPlayer">Agregar</button>';
+      html += '</div></div>';
+
+      teamsWithPlayers.forEach(function (team) {
+        html += '<div class="card mt-1"><div class="card-header">' + team.team + ' (' + team.players.length + ')</div><div class="card-body">';
+        team.players.forEach(function (player, idx) {
+          html += '<span class="player-tag" style="display:inline-block;background:var(--bg-card-hover);border:1px solid var(--border);border-radius:20px;padding:0.2rem 0.8rem;margin:0.2rem;font-size:0.85rem;">';
+          html += player;
+          html += ' <button class="remove-player-btn" data-team="' + team.team + '" data-player="' + player + '" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:1rem;">&times;</button>';
+          html += '</span>';
+        });
+        html += '</div></div>';
+      });
+
+      if (teamsEmpty.length > 0) {
+        html += '<div class="card mt-1"><div class="card-header">⏳ Selecciones sin lista disponible</div><div class="card-body">';
+        html += '<p class="text-muted">Estas selecciones aún no han publicado su convocatoria oficial. Puedes agregar jugadores manualmente.</p>';
+        teamsEmpty.forEach(function (t) {
+          html += '<span class="player-tag" style="display:inline-block;background:var(--bg-card-hover);border:1px solid var(--border);border-radius:20px;padding:0.2rem 0.8rem;margin:0.2rem;font-size:0.85rem;color:var(--text-muted);">' + t.team + ' (0)</span>';
+        });
+        html += '</div></div>';
+      }
+
+      html += '</div>';
+      container.innerHTML = html;
+
+      document.getElementById('showAddPlayerForm').addEventListener('click', function () {
+        const f = document.getElementById('addPlayerForm');
+        f.style.display = f.style.display === 'none' ? 'block' : 'none';
+      });
+
+      document.getElementById('saveNewPlayer').addEventListener('click', function () {
+        const name = document.getElementById('apName').value.trim();
+        const team = document.getElementById('apTeam').value;
+        if (!name) { UI.showToast('Ingresa el nombre del jugador', 'error'); return; }
+
+        const players = API.getPlayers();
+        var found = false;
+        players.forEach(function (t) {
+          if (t.team === team) {
+            t.players.push(name);
+            found = true;
+          }
+        });
+        if (found) {
+          const K = APP.STORAGE_KEYS;
+          localStorage.setItem(K.PLAYERS, JSON.stringify(players));
+          UI.showToast('Jugador agregado a ' + team, 'success');
+          renderAdminPlayers();
+        }
+      });
+
+      container.querySelectorAll('.remove-player-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const teamName = this.dataset.team;
+          const playerName = this.dataset.player;
+          if (confirm('¿Eliminar a ' + playerName + ' de ' + teamName + '?')) {
+            const players = API.getPlayers();
+            players.forEach(function (t) {
+              if (t.team === teamName) {
+                t.players = t.players.filter(function (p) { return p !== playerName; });
+              }
+            });
+            const K = APP.STORAGE_KEYS;
+            localStorage.setItem(K.PLAYERS, JSON.stringify(players));
+            UI.showToast('Jugador eliminado', 'success');
+            renderAdminPlayers();
+          }
+        });
+      });
+    }
+
+    /* ── Admin: Especiales Oficiales ── */
+
+    function renderAdminSpecials() {
+      const container = document.getElementById('adminContent');
+      const settings = API.getSettings();
+      const official = settings.officialSpecials || {};
+      const teams = Helpers.getValidTeams();
+      const allPlayers = API.getAllPlayerNames();
+      const teamOptions = teams.map(t => '<option value="' + t + '">').join('');
+      const playerOptions = allPlayers.map(p => '<option value="' + p + '">').join('');
+
+      let html = '<div class="admin-section"><h3>⭐ Resultados Oficiales del Torneo</h3>';
+      html += '<p class="text-muted">Fija los resultados oficiales para las predicciones especiales. Se usan para calcular puntos.</p>';
+      html += '<div class="card"><div class="card-body">';
+      html += '<div class="form-group"><label>🏆 Campeón</label><input type="text" id="osChampion" class="input" list="osTeamList" value="' + (official.champion || '') + '" placeholder="Selecciona un equipo..."></div>';
+      html += '<div class="form-group"><label>🥈 Subcampeón</label><input type="text" id="osRunnerUp" class="input" list="osTeamList" value="' + (official.runnerUp || '') + '" placeholder="Selecciona un equipo..."></div>';
+      html += '<div class="form-group"><label>🥉 Tercer Lugar</label><input type="text" id="osThirdPlace" class="input" list="osTeamList" value="' + (official.thirdPlace || '') + '" placeholder="Selecciona un equipo..."></div>';
+      html += '<datalist id="osTeamList">' + teamOptions + '</datalist>';
+      html += '<div class="form-group"><label>⚽ Goleador</label><input type="text" id="osTopScorer" class="input" list="osPlayerList" value="' + (official.topScorer || '') + '" placeholder="Selecciona o escribe un jugador..."></div>';
+      html += '<div class="form-group"><label>🌟 Balón de Oro</label><input type="text" id="osBallonDor" class="input" list="osPlayerList" value="' + (official.ballonDor || '') + '" placeholder="Selecciona o escribe un jugador..."></div>';
+      html += '<datalist id="osPlayerList">' + playerOptions + '</datalist>';
+      html += '<div id="osValidationErrors" class="auth-error"></div>';
+      html += '<button class="btn btn-primary" id="saveOfficialSpecials">Guardar Resultados Oficiales</button>';
+      html += '</div></div></div>';
+      container.innerHTML = html;
+
+      document.getElementById('saveOfficialSpecials').addEventListener('click', function () {
+        const champion = document.getElementById('osChampion').value.trim();
+        const runnerUp = document.getElementById('osRunnerUp').value.trim();
+        const thirdPlace = document.getElementById('osThirdPlace').value.trim();
+        const topScorer = document.getElementById('osTopScorer').value.trim();
+        const ballonDor = document.getElementById('osBallonDor').value.trim();
+        const errors = [];
+        const errorEl = document.getElementById('osValidationErrors');
+
+        if (!champion) errors.push('Campeón es requerido');
+        if (!runnerUp) errors.push('Subcampeón es requerido');
+        if (!thirdPlace) errors.push('Tercer Lugar es requerido');
+
+        [  { name: 'Campeón', el: document.getElementById('osChampion') },
+          { name: 'Subcampeón', el: document.getElementById('osRunnerUp') },
+          { name: 'Tercer Lugar', el: document.getElementById('osThirdPlace') }
+        ].forEach(function (field) {
+          const val = field.el.value.trim();
+          if (val && !Helpers.isValidTeam(val)) {
+            errors.push('"' + val + '" no es un equipo válido para ' + field.name + '. Selecciona de la lista.');
+          } else if (val) {
+            const corrected = Helpers.findTeamName(val);
+            if (corrected) field.el.value = corrected;
+          }
+        });
+
+        if (champion && runnerUp && champion.toLowerCase() === runnerUp.toLowerCase()) {
+          errors.push('Campeón y Subcampeón no pueden ser el mismo equipo');
+        }
+        if (champion && thirdPlace && champion.toLowerCase() === thirdPlace.toLowerCase()) {
+          errors.push('Campeón y Tercer Lugar no pueden ser el mismo equipo');
+        }
+        if (runnerUp && thirdPlace && runnerUp.toLowerCase() === thirdPlace.toLowerCase()) {
+          errors.push('Subcampeón y Tercer Lugar no pueden ser el mismo equipo');
+        }
+
+        [  { name: 'Goleador', val: topScorer, el: document.getElementById('osTopScorer') },
+          { name: 'Balón de Oro', val: ballonDor, el: document.getElementById('osBallonDor') }
+        ].forEach(function (field) {
+          if (field.val && field.val.length >= 2 && !API.isValidPlayer(field.val)) {
+            errors.push('"' + field.val + '" no es un jugador válido para ' + field.name + '. Selecciona de la lista.');
+          } else if (field.val) {
+            const corrected = API.findPlayerName(field.val);
+            if (corrected) field.el.value = corrected;
+          }
+        });
+
+        if (errors.length > 0) {
+          errorEl.style.color = 'var(--danger)';
+          errorEl.innerHTML = errors.join('<br>');
+          return;
+        }
+
+        errorEl.textContent = '';
+
+        API.saveOfficialSpecials({
+          champion: document.getElementById('osChampion').value.trim(),
+          runnerUp: document.getElementById('osRunnerUp').value.trim(),
+          thirdPlace: document.getElementById('osThirdPlace').value.trim(),
+          topScorer: document.getElementById('osTopScorer').value.trim(),
+          ballonDor: document.getElementById('osBallonDor').value.trim()
+        });
+        UI.showToast('Resultados oficiales guardados', 'success');
+      });
+    }
+
+    /* ── Admin: Configuración ── */
+
+    function renderAdminSettings() {
+      const container = document.getElementById('adminContent');
+      const settings = API.getSettings();
+
+      let html = '<div class="admin-section"><h3>⚙️ Configuración</h3>';
+      html += '<div class="card"><div class="card-body">';
+      html += '<div class="form-group"><label>Nombre de la App</label><input type="text" id="setAppName" class="input" value="' + (settings.appName || '') + '"></div>';
+      html += '<div class="form-group"><label>URL del QR de Pago</label><input type="text" id="setQRUrl" class="input" value="' + (settings.paymentQRUrl || '') + '"></div>';
+      html += '<div class="form-row">';
+      html += '<div class="form-group"><label>Monto de Pago ($)</label><input type="number" id="setAmount" class="input" value="' + (settings.paymentAmount || 50) + '"></div>';
+      html += '<div class="form-group"><label>Moneda</label><input type="text" id="setCurrency" class="input" value="' + (settings.paymentCurrency || 'USD') + '"></div>';
+      html += '</div>';
+      html += '<div class="form-group"><label>Descripción del Pago</label><input type="text" id="setDesc" class="input" value="' + (settings.paymentDescription || '') + '"></div>';
+      html += '<div class="form-group"><label>Fecha de Inicio del Torneo</label><input type="datetime-local" id="setStartDate" class="input" value="' + (settings.tournamentStartDate ? settings.tournamentStartDate.slice(0, 16) : '') + '"></div>';
+      html += '<button class="btn btn-primary" id="saveSettingsBtn">Guardar Configuración</button>';
+      html += '</div></div></div>';
+      container.innerHTML = html;
+
+      document.getElementById('saveSettingsBtn').addEventListener('click', function () {
+        const newSettings = {
+          paymentQRUrl: document.getElementById('setQRUrl').value.trim(),
+          paymentAmount: parseFloat(document.getElementById('setAmount').value) || 50,
+          paymentCurrency: document.getElementById('setCurrency').value.trim() || 'USD',
+          paymentDescription: document.getElementById('setDesc').value.trim(),
+          appName: document.getElementById('setAppName').value.trim(),
+          tournamentStartDate: new Date(document.getElementById('setStartDate').value).toISOString(),
+          rounds: settings.rounds,
+          officialSpecials: settings.officialSpecials
+        };
+        API.saveSettings(newSettings);
+        UI.showToast('Configuración guardada', 'success');
+      });
+    }
+
+    /* ── Admin: Zona de Peligro ── */
+
+    function renderAdminDanger() {
+      const container = document.getElementById('adminContent');
+      let html = '<div class="admin-section"><h3>⚠️ Zona de Peligro</h3>';
+      html += '<div class="card card-danger"><div class="card-body">';
+      html += '<h4>Reiniciar Todos los Datos</h4>';
+      html += '<p class="text-warning">Esto eliminará predicciones, resultados, configuración y sesiones de usuarios. Se conservarán las cuentas de usuario (incluyendo admin), las jornadas, los jugadores y los equipos.</p>';
+      html += '<button class="btn btn-danger" id="resetAllBtn">🗑️ Reiniciar Todo</button>';
+      html += '</div></div></div>';
+      container.innerHTML = html;
+
+      document.getElementById('resetAllBtn').addEventListener('click', function () {
+        if (confirm('¿Estás seguro de eliminar TODOS los datos? ¡Esta acción no se puede deshacer!')) {
+          if (confirm('¿REALMENTE seguro? Se perderán predicciones, resultados y configuración. Las cuentas de usuario, jornadas y jugadores se conservan.')) {
+            API.resetAll();
+            UI.showToast('¡Todos los datos reiniciados! Actualizando...', 'success');
+            setTimeout(function () { location.reload(); }, 1500);
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>

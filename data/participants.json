@@ -1,0 +1,92 @@
+[
+  {
+    "id": 1,
+    "username": "admin",
+    "password": "admin123",
+    "whatsapp": "5511999999999",
+    "active": true,
+    "paid": true,
+    "admin": true
+  },
+  {
+    "id": 2,
+    "username": "Luis",
+    "password": "1234",
+    "whatsapp": "5547999999999",
+    "active": true,
+    "paid": true,
+    "admin": false
+  },
+  {
+    "id": 3,
+    "username": "Maria",
+    "password": "1234",
+    "whatsapp": "5547888888888",
+    "active": true,
+    "paid": true,
+    "admin": false
+  },
+  {
+    "id": 4,
+    "username": "Joao",
+    "password": "1234",
+    "whatsapp": "5547777777777",
+    "active": true,
+    "paid": false,
+    "admin": false
+  },
+  {
+    "id": 5,
+    "username": "Ana",
+    "password": "1234",
+    "whatsapp": "5547666666666",
+    "active": false,
+    "paid": true,
+    "admin": false
+  },
+  {
+    "id": 6,
+    "username": "Pedro",
+    "password": "1234",
+    "whatsapp": "5547555555555",
+    "active": true,
+    "paid": true,
+    "admin": false
+  },
+  {
+    "id": 7,
+    "username": "Carla",
+    "password": "1234",
+    "whatsapp": "5547444444444",
+    "active": true,
+    "paid": true,
+    "admin": false
+  },
+  {
+    "id": 8,
+    "username": "Rafael",
+    "password": "1234",
+    "whatsapp": "5547333333333",
+    "active": true,
+    "paid": true,
+    "admin": false
+  },
+  {
+    "id": 9,
+    "username": "Beatriz",
+    "password": "1234",
+    "whatsapp": "5547222222222",
+    "active": true,
+    "paid": true,
+    "admin": false
+  },
+  {
+    "id": 10,
+    "username": "Thiago",
+    "password": "1234",
+    "whatsapp": "5547111111111",
+    "active": true,
+    "paid": false,
+    "admin": false
+  }
+]

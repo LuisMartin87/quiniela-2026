@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiniela Mundial 2026</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="navbar"></div>
+
+  <div id="toastContainer"></div>
+
+  <div id="modalOverlay" class="modal-overlay" onclick="if(event.target===this)UI.closeModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle"></h3>
+        <button class="modal-close" onclick="UI.closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <main class="container">
+    <section id="dashboardPage" class="page page-active">
+      <h2>📊 Inicio</h2>
+      <div id="dashboardContent"></div>
+    </section>
+
+    <section id="matchesPage" class="page">
+      <h2>⚽ Predicciones de Partidos</h2>
+      <div id="matchesContent"></div>
+    </section>
+
+    <section id="specialsPage" class="page">
+      <h2>⭐ Predicciones Especiales</h2>
+      <div id="specialsContent"></div>
+    </section>
+
+    <section id="leaderboardPage" class="page">
+      <div id="leaderboardContent"></div>
+    </section>
+
+    <section id="historyPage" class="page">
+      <div id="historyContent"></div>
+    </section>
+  </main>
+
+  <script src="constants.js"></script>
+  <script src="helpers.js"></script>
+  <script src="api.js"></script>
+  <script src="ui.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
