@@ -14,19 +14,6 @@ var SHEET = {
   SESSIONS: 'sessions'
 };
 
-function doGet(e) {
-  var action = e && e.parameter && e.parameter.action;
-  var name = e && e.parameter && e.parameter.name;
-
-  if (action === 'getAll') {
-    return jsonResponse(getAllData());
-  }
-  if (action === 'getCollection' && name) {
-    return jsonResponse(readCollection(name));
-  }
-  return jsonResponse({ error: 'Invalid action' });
-}
-
 function doPost(e) {
   var body = JSON.parse(e.postData.contents);
   var action = body.action;
@@ -37,6 +24,28 @@ function doPost(e) {
   if (action === 'resetVolatile') return jsonResponse(resetVolatile());
 
   return jsonResponse({ error: 'Invalid action' });
+}
+
+function debugSheet(name) {
+  var sheet = getSheet(name);
+  var rows = sheet.getDataRange().getValues();
+  var info = {
+    sheetName: sheet.getName(),
+    numRows: rows.length,
+    numCols: rows.length > 0 ? rows[0].length : 0
+  };
+  if (rows.length > 0) {
+    info.headers = rows[0].map(function(h) { return String(h); });
+    info.rows = [];
+    for (var r = 1; r < rows.length; r++) {
+      var row = rows[r];
+      info.rows.push({
+        values: row.map(function(v) { return String(v); }),
+        types: row.map(function(v) { return typeof v; })
+      });
+    }
+  }
+  return info;
 }
 
 function jsonResponse(data) {
