@@ -50,6 +50,8 @@
 
   <script src="constants.js"></script>
   <script src="helpers.js"></script>
+  <script src="config.js"></script>
+  <script src="backend.js"></script>
   <script src="api.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async function () {
@@ -79,7 +81,7 @@
         document.getElementById('registerError').textContent = '';
       });
 
-      document.getElementById('loginBtn').addEventListener('click', function () {
+      document.getElementById('loginBtn').addEventListener('click', async function () {
         const username = document.getElementById('loginUsername').value.trim();
         const password = document.getElementById('loginPassword').value;
         const errorEl = document.getElementById('loginError');
@@ -89,7 +91,7 @@
           return;
         }
 
-        const result = API.login(username, password);
+        const result = await API.login(username, password);
         if (result.success) {
           window.location.href = 'index.html';
         } else {
@@ -101,13 +103,13 @@
         if (e.key === 'Enter') document.getElementById('loginBtn').click();
       });
 
-      document.getElementById('registerBtn').addEventListener('click', function () {
+      document.getElementById('registerBtn').addEventListener('click', async function () {
         const username = document.getElementById('regUsername').value.trim();
         const password = document.getElementById('regPassword').value;
         const whatsapp = document.getElementById('regWhatsapp').value.trim();
         const errorEl = document.getElementById('registerError');
 
-        const result = API.registerUser({ username: username, password: password, whatsapp: whatsapp });
+        const result = await API.registerUser({ username: username, password: password, whatsapp: whatsapp });
         if (result.success) {
           errorEl.style.color = 'var(--success)';
           errorEl.textContent = '¡Registro exitoso! Ahora puedes iniciar sesión.';

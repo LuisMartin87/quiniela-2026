@@ -1,5 +1,6 @@
 const API = (function () {
   const K = APP.STORAGE_KEYS;
+  var backendMode = typeof Backend !== 'undefined' && Backend.isEnabled();
 
   function getItem(key) {
     const raw = localStorage.getItem(key);
@@ -8,11 +9,23 @@ const API = (function () {
 
   function setItem(key, data) {
     localStorage.setItem(key, JSON.stringify(data));
+    if (backendMode) {
+      Backend.syncKey(key);
+    }
   }
 
   /* ── Initialization ── */
 
   async function initData() {
+    if (backendMode) {
+      try {
+        await Backend.fetchAll();
+        return;
+      } catch (e) {
+        console.warn('Backend not available, falling back to localStorage', e);
+        backendMode = false;
+      }
+    }
     var alreadyInit = localStorage.getItem(K.INITIALIZED);
     if (alreadyInit) {
       if (!getPlayers() || getPlayers().length === 0) {
@@ -54,7 +67,17 @@ const API = (function () {
 
   /* ── Session ── */
 
-  function login(username, password) {
+  async function login(username, password) {
+    if (backendMode) {
+      var result = await Backend.login(username, password);
+      if (result.success && result.user) {
+        sessionStorage.setItem(K.SESSION, JSON.stringify(result.user));
+        if (result.token) {
+          localStorage.setItem(K.SESSION + '_token', result.token);
+        }
+      }
+      return result;
+    }
     const users = getItem(K.USERS) || [];
     const user = users.find(u => u.username === username && u.password === password);
     if (!user) {
@@ -103,7 +126,10 @@ const API = (function () {
     return users.find(u => u.username.toLowerCase() === username.toLowerCase()) || null;
   }
 
-  function registerUser(data) {
+  async function registerUser(data) {
+    if (backendMode) {
+      return await Backend.registerUser(data);
+    }
     const users = getUsers();
 
     if (getUserByUsername(data.username)) {
@@ -610,6 +636,9 @@ const API = (function () {
         localStorage.removeItem(key);
       }
     });
+    if (backendMode) {
+      Backend.resetVolatile();
+    }
     return { success: true, message: 'Datos de usuarios reiniciados. Se conservan cuentas, jornadas y jugadores.' };
   }
 
