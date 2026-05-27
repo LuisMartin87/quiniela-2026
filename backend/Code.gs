@@ -121,13 +121,21 @@ function handleLogin(body) {
   var users = readCollection(SHEET.USERS);
   var user = null;
   for (var i = 0; i < users.length; i++) {
-    if (users[i].username === body.username && users[i].password === body.password) {
-      user = users[i];
+    var u = users[i];
+    Logger.log('Checking user: username="' + u.username + '" password="' + u.password + '" active="' + u.active + '"');
+    if (String(u.username).trim() === String(body.username).trim() && String(u.password) === String(body.password)) {
+      user = u;
       break;
     }
   }
-  if (!user) return { success: false, error: 'Usuario o contraseña inválidos' };
-  if (!user.active) return { success: false, error: 'Tu cuenta está inactiva. Contacta al administrador.' };
+  if (!user) {
+    Logger.log('Login failed. Looking for username="' + body.username + '" password="' + body.password + '" in ' + users.length + ' users');
+    return { success: false, error: 'Usuario o contraseña inválidos' };
+  }
+  if (user.active !== true && user.active !== 'TRUE' && user.active !== 'true') {
+    Logger.log('User "' + body.username + '" is inactive (active="' + user.active + '")');
+    return { success: false, error: 'Tu cuenta está inactiva. Contacta al administrador.' };
+  }
   var token = Utilities.getUuid();
   var sessions = readCollection(SHEET.SESSIONS);
   sessions.push({ id: sessions.length + 1, userId: user.id, token: token, createdAt: new Date().toISOString() });
