@@ -60,6 +60,15 @@ function getSheet(name) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName(name);
   if (!sheet) {
+    var all = ss.getSheets();
+    for (var i = 0; i < all.length; i++) {
+      if (all[i].getName().toLowerCase() === name.toLowerCase()) {
+        sheet = all[i];
+        break;
+      }
+    }
+  }
+  if (!sheet) {
     sheet = ss.insertSheet(name);
     sheet.appendRow(['_created']);
   }
