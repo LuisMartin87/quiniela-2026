@@ -91,11 +91,16 @@
           return;
         }
 
-        const result = await API.login(username, password);
-        if (result.success) {
-          window.location.href = 'index.html';
-        } else {
-          errorEl.textContent = result.error;
+        try {
+          const result = await API.login(username, password);
+          if (result.success) {
+            window.location.href = 'index.html';
+          } else {
+            errorEl.textContent = result.error;
+          }
+        } catch (e) {
+          errorEl.textContent = 'Error de conexión con el servidor. Verifica la URL del backend.';
+          console.error(e);
         }
       });
 
