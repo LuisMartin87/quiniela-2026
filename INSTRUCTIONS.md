@@ -13,10 +13,20 @@
    - `players`
    - `sessions`
 3. Pobla cada pestaña con los datos iniciales (puedes copiar de los archivos `data/*.json`):
-   - **users**: columnas `id, username, password, name, whatsapp, active, paid, admin`
-   - **matches**: columnas `id, round, dateISO, homeTeam, awayTeam, status`
-   - **players**: columnas `team, playerName` (un jugador por fila)
-   - **settings**: columnas `key, value` (una fila por configuración)
+
+   **`users`** — columnas: `id, username, password, whatsapp, active, paid, admin`
+   
+   **`matches`** — columnas: `id, round, dateISO, homeTeam, awayTeam, status`
+   
+   **`players`** — formato plano (1 fila por jugador): `team, playerName`
+   
+   **`settings`** — columna única: `id, value` donde `value` es el JSON completo de configuración:
+   ```
+   id | value
+   1  | {"appName":"Quiniela Mundial 2026","paymentAmount":50,"paymentCurrency":"USD","tournamentStartDate":"2026-06-10T18:00:00","rounds":{},"officialSpecials":{"champion":"","runnerUp":"","thirdPlace":"","topScorer":"","ballonDor":""}}
+   ```
+   
+   Las pestañas `results`, `predictions`, `specialPredictions`, `sessions` se crean vacías (solo headers: `matchId,homeScore,awayScore` / `userId,matchId,homeScore,awayScore,updatedAt` / etc.)
 
 ## Paso 2: Crear Apps Script
 

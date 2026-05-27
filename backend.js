@@ -11,14 +11,66 @@ const Backend = (function () {
     wc2026_players: 'players'
   };
 
+  /* ── Format converters ──
+     Frontend uses: players = [{team, players:[name, ...]}, ...]
+     Sheet uses:    players = [{team, playerName}, ...]
+     Frontend: settings = {appName, rounds, ...}
+     Sheet:    settings = [{id:1, value:'{"appName":...}'}]
+  */
+
+  function playersToFlat(grouped) {
+    var flat = [];
+    grouped.forEach(function (team) {
+      (team.players || []).forEach(function (name) {
+        flat.push({ team: team.team, playerName: name });
+      });
+    });
+    return flat;
+  }
+
+  function playersFromFlat(flat) {
+    var map = {};
+    if (!flat || !flat.length) return [];
+    flat.forEach(function (row) {
+      if (!row.team) return;
+      if (!map[row.team]) map[row.team] = { team: row.team, players: [] };
+      if (row.playerName) map[row.team].players.push(row.playerName);
+    });
+    return Object.keys(map).map(function (k) { return map[k]; });
+  }
+
+  function settingsToArray(settingsObj) {
+    if (!settingsObj || typeof settingsObj !== 'object') return [];
+    return [{ id: 1, value: JSON.stringify(settingsObj) }];
+  }
+
+  function settingsFromArray(arr) {
+    if (!arr || !arr.length) return null;
+    try {
+      return typeof arr[0].value === 'string' ? JSON.parse(arr[0].value) : arr[0].value;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /* ── Core ── */
+
   function isEnabled() {
     return BASE_URL.length > 0;
   }
 
-  /* ── Load all data from backend into localStorage ── */
   async function fetchAll() {
     var res = await fetch(BASE_URL + '?action=getAll');
     var data = await res.json();
+    if (!data || data.error) {
+      throw new Error(data ? data.error : 'Backend returned no data');
+    }
+    if (data.settings && Array.isArray(data.settings)) {
+      data.settings = settingsFromArray(data.settings);
+    }
+    if (data.players && Array.isArray(data.players)) {
+      data.players = playersFromFlat(data.players);
+    }
     var K = APP.STORAGE_KEYS;
     var map = {};
     map[K.USERS] = data.users;
@@ -36,7 +88,6 @@ const Backend = (function () {
     localStorage.setItem(K.INITIALIZED, 'true');
   }
 
-  /* ── Sync a single collection to backend ── */
   async function syncCollection(collectionName, data) {
     if (!BASE_URL) return;
     try {
@@ -49,17 +100,20 @@ const Backend = (function () {
     }
   }
 
-  /* ── Sync a localStorage key to backend ── */
   function syncKey(key) {
     var name = COLLECTION_MAP[key];
     if (!name) return;
     var raw = localStorage.getItem(key);
     var data = [];
     try { data = raw ? JSON.parse(raw) : []; } catch (e) { data = []; }
+    if (name === 'players') {
+      data = playersToFlat(data);
+    } else if (name === 'settings') {
+      data = settingsToArray(data);
+    }
     syncCollection(name, data);
   }
 
-  /* ── Login through backend ── */
   async function login(username, password) {
     var res = await fetch(BASE_URL, {
       method: 'POST',
@@ -68,20 +122,21 @@ const Backend = (function () {
     return await res.json();
   }
 
-  /* ── Register user through backend ── */
   async function registerUser(data) {
     var res = await fetch(BASE_URL, {
       method: 'POST',
       body: JSON.stringify({ action: 'registerUser', username: data.username, password: data.password, whatsapp: data.whatsapp })
     });
     var result = await res.json();
-    if (result.success) {
-      syncKey('wc2026_users');
+    if (result.success && result.user) {
+      var K = APP.STORAGE_KEYS;
+      var users = JSON.parse(localStorage.getItem(K.USERS) || '[]');
+      users.push(result.user);
+      localStorage.setItem(K.USERS, JSON.stringify(users));
     }
     return result;
   }
 
-  /* ── Reset volatile data on backend ── */
   async function resetVolatile() {
     if (!BASE_URL) return;
     try {

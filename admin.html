@@ -505,6 +505,7 @@
         if (found) {
           const K = APP.STORAGE_KEYS;
           localStorage.setItem(K.PLAYERS, JSON.stringify(players));
+          if (typeof Backend !== 'undefined') Backend.syncKey(K.PLAYERS);
           UI.showToast('Jugador agregado a ' + team, 'success');
           renderAdminPlayers();
         }
@@ -523,6 +524,7 @@
             });
             const K = APP.STORAGE_KEYS;
             localStorage.setItem(K.PLAYERS, JSON.stringify(players));
+            if (typeof Backend !== 'undefined') Backend.syncKey(K.PLAYERS);
             UI.showToast('Jugador eliminado', 'success');
             renderAdminPlayers();
           }

@@ -76,8 +76,9 @@ function readCollection(name) {
 }
 
 function writeCollection(name, data) {
-  if (!data || !data.length) return;
   var sheet = getSheet(name);
+  sheet.clearContents();
+  if (!data || !data.length) return;
   var headers = Object.keys(data[0]);
   var rows = [headers];
   data.forEach(function (item) {
@@ -85,11 +86,8 @@ function writeCollection(name, data) {
     headers.forEach(function (h) { row.push(item[h] !== undefined ? item[h] : ''); });
     rows.push(row);
   });
-  sheet.clearContents();
-  if (rows.length > 0) {
-    var range = sheet.getRange(1, 1, rows.length, headers.length);
-    range.setValues(rows);
-  }
+  var range = sheet.getRange(1, 1, rows.length, headers.length);
+  range.setValues(rows);
 }
 
 function clearSheet(name) {
