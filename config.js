@@ -4,5 +4,5 @@
    Ej: 'https://script.google.com/macros/s/ID/exec'
 */
 const CONFIG = {
-  BACKEND_URL: 'https://script.google.com/macros/s/AKfycbw6_HLxmf30tbX0oN6YNO2Gyh56Pjh7xBkJGq7gJBJtkPRzGt7_xA4xDcbXci1m6gD8/exec'
+  BACKEND_URL: 'https://script.google.com/macros/s/AKfycbxntwsnOxoGtPXkQOc2LObY_hxERI-zUizcCMVKY5wELEzMT212DROOyBvnxd0z2Bac/exec'
 };

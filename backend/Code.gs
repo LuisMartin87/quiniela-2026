@@ -14,6 +14,14 @@ var SHEET = {
   SESSIONS: 'sessions'
 };
 
+function doGet(e) {
+  var action = e.parameter.action;
+  if (action === 'getAll') return jsonResponse(getAllData());
+  if (action === 'getCollection') return jsonResponse({ data: readCollection(e.parameter.name) });
+  if (action === 'debug') return jsonResponse(debugSheet(e.parameter.name));
+  return jsonResponse({ error: 'Invalid action' });
+}
+
 function doPost(e) {
   var body = JSON.parse(e.postData.contents);
   var action = body.action;
