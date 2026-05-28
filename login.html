@@ -100,9 +100,8 @@
           return;
         }
 
-        const loader = document.getElementById('appLoader');
-        loader.querySelector('.loader-text').textContent = 'Ingresando...';
-        loader.classList.remove('hidden');
+        btn.disabled = true;
+        btn.textContent = '⏳ Ingresando...';
         errorEl.textContent = '';
 
         try {
@@ -110,13 +109,14 @@
           if (result.success) {
             window.location.href = 'index.html';
           } else {
-            loader.classList.add('hidden');
             errorEl.textContent = result.error;
           }
         } catch (e) {
-          loader.classList.add('hidden');
           errorEl.textContent = 'Error de conexión con el servidor. Verifica la URL del backend.';
           console.error(e);
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Iniciar Sesión';
         }
       });
 

@@ -58,22 +58,57 @@ const UI = (function () {
     const matches = API.getMatches();
     const currentRound = Helpers.getCurrentRound(matches);
 
-    let html = '<div class="dashboard-grid">';
+    let html = '';
 
-    html += '<div class="card"><div class="card-header">Mi Estado</div><div class="card-body">';
-    html += '<p><strong>Usuario:</strong> ' + (fullUser ? fullUser.username : user.username) + '</p>';
-    html += '<p><strong>Estado:</strong> ' + (fullUser && fullUser.active ? '✅ Activo' : '❌ Inactivo') + '</p>';
-    html += '<p><strong>Pago:</strong> ' + (fullUser && fullUser.paid ? '✅ Pagado' : '❌ No Pagado') + '</p>';
+    html += '<div class="dashboard-grid">';
+
+    html += '<div class="card"><div class="card-header">👤 Mi Estado</div><div class="card-body">';
+    html += '<table class="status-table">';
+    html += '<tr><td>Usuario</td><td><strong>' + (fullUser ? fullUser.username : user.username) + '</strong></td></tr>';
+    html += '<tr><td>Cuenta</td><td>' + (fullUser && fullUser.active ? '✅ Activa' : '❌ Inactiva') + '</td></tr>';
+    html += '<tr><td>Pago</td><td>' + (fullUser && fullUser.paid ? '✅ Pagado' : '❌ No Pagado') + '</td></tr>';
+    html += '<tr><td>Ronda Actual</td><td><strong>' + Helpers.getRoundName(currentRound) + '</strong> ' + Helpers.getStatusBadge(API.getRoundStatus(currentRound)) + '</td></tr>';
+    html += '</table>';
     html += '</div></div>';
 
-    html += '<div class="card"><div class="card-header">Ronda Actual</div><div class="card-body">';
-    html += '<p><strong>' + Helpers.getRoundName(currentRound) + '</strong></p>';
-    html += '<p>Estado: ' + Helpers.getStatusBadge(API.getRoundStatus(currentRound)) + '</p>';
+    html += '<div class="card"><div class="card-header">📖 Cómo funciona</div><div class="card-body">';
+    html += '<p>Pronostica el marcador de cada partido del Mundial <strong>FIFA World Cup 2026</strong>. Acierta y suma puntos para escalar en la tabla general.</p>';
+    html += '<p>💰 <strong>Cuota de entrada:</strong> <strong>$' + settings.paymentAmount + '</strong></p>';
+    html += '<p>🔓 Los pronósticos se habilitan ronda por ronda y se <strong>bloquean 10 minutos antes</strong> del primer partido de cada jornada.</p>';
+    html += '<p>⭐ Además de los partidos, encontrarás <strong>Pronósticos Especiales</strong> (campeón, goleador, etc.) que se bloquean al iniciar el torneo.</p>';
     html += '</div></div>';
 
-    html += '<div class="card"><div class="card-header">Pago</div><div class="card-body">';
-    html += '<p>Cuota de entrada: <strong>$' + settings.paymentAmount + '</strong></p>';
+    html += '</div>';
+
+    html += '<div class="card"><div class="card-header">🏆 Sistema de Puntuación</div><div class="card-body">';
+    html += '<div class="scoring-grid">';
+    html += '<div class="scoring-item"><span class="scoring-icon">🎯</span><div><strong>Marcador Exacto</strong><span class="scoring-pts">+' + APP.SCORES.EXACT_SCORE + ' pts</span><p class="scoring-desc">Aciertas el resultado exacto del partido</p></div></div>';
+    html += '<div class="scoring-item"><span class="scoring-icon">✅</span><div><strong>Ganador o Empate</strong><span class="scoring-pts">+' + APP.SCORES.CORRECT_WINNER + ' pt</span><p class="scoring-desc">Aciertas quién gana o que empatan, pero no el marcador exacto</p></div></div>';
+    html += '<div class="scoring-item"><span class="scoring-icon">❌</span><div><strong>Incorrecto</strong><span class="scoring-pts">+' + APP.SCORES.INCORRECT + ' pts</span><p class="scoring-desc">No acertaste ni el ganador ni el marcador</p></div></div>';
+    html += '</div>';
+
+    html += '<h4 class="scoring-subtitle">⭐ Pronósticos Especiales</h4>';
+    html += '<div class="scoring-grid">';
+    html += '<div class="scoring-item"><span class="scoring-icon">🏆</span><div><strong>Campeón</strong><span class="scoring-pts">+' + APP.SCORES.SPECIAL_CHAMPION + ' pts</span></div></div>';
+    html += '<div class="scoring-item"><span class="scoring-icon">🥈</span><div><strong>Subcampeón</strong><span class="scoring-pts">+' + APP.SCORES.SPECIAL_RUNNER_UP + ' pts</span></div></div>';
+    html += '<div class="scoring-item"><span class="scoring-icon">🥉</span><div><strong>Tercer Lugar</strong><span class="scoring-pts">+' + APP.SCORES.SPECIAL_THIRD_PLACE + ' pts</span></div></div>';
+    html += '<div class="scoring-item"><span class="scoring-icon">⚽</span><div><strong>Goleador</strong><span class="scoring-pts">+' + APP.SCORES.SPECIAL_TOP_SCORER + ' pts</span></div></div>';
+    html += '<div class="scoring-item"><span class="scoring-icon">🌟</span><div><strong>Balón de Oro</strong><span class="scoring-pts">+' + APP.SCORES.SPECIAL_BALLON_DOR + ' pts</span></div></div>';
+    html += '</div>';
+    html += '</div></div>';
+
+    html += '<div class="card"><div class="card-header">📅 Fechas y Plazos</div><div class="card-body">';
+    html += '<div class="deadlines">';
+    html += '<div class="deadline-item"><span class="deadline-icon">🔓</span><div><strong>Apertura</strong><p class="deadline-desc">Cada ronda se habilita automáticamente después de que finaliza la ronda anterior</p></div></div>';
+    html += '<div class="deadline-item"><span class="deadline-icon">🔒</span><div><strong>Cierre</strong><p class="deadline-desc">Los pronósticos se bloquean <strong>10 minutos antes</strong> del primer partido de la ronda</p></div></div>';
+    html += '<div class="deadline-item"><span class="deadline-icon">⭐</span><div><strong>Especiales</strong><p class="deadline-desc">Los pronósticos especiales se bloquean al iniciar el torneo y <strong>no se pueden modificar</strong> después</p></div></div>';
+    html += '<div class="deadline-item"><span class="deadline-icon">💰</span><div><strong>Pago</strong><p class="deadline-desc">Debes estar <strong>pagado</strong> para poder enviar pronósticos. La cuota es única para todo el torneo</p></div></div>';
+    html += '</div>';
+    html += '</div></div>';
+
+    html += '<div class="card"><div class="card-header">💳 Pago</div><div class="card-body">';
     if (fullUser && !fullUser.paid) {
+      html += '<p class="payment-amount">Cuota de entrada: <strong>$' + settings.paymentAmount + '</strong></p>';
       html += '<p>Pagar mediante: <strong>' + settings.paymentDescription + '</strong></p>';
       if (settings.paymentQRUrl) {
         html += '<div class="qr-placeholder">';
@@ -83,11 +118,15 @@ const UI = (function () {
       }
       html += '<p class="text-warning">⏳ Esperando confirmación de pago</p>';
     } else if (fullUser && fullUser.paid) {
-      html += '<p class="text-success">✅ ¡Pago confirmado!</p>';
+      html += '<div class="paid-confirmation">';
+      html += '<div class="paid-icon">✅</div>';
+      html += '<div><strong>¡Pago confirmado!</strong><p class="text-muted">Ya puedes enviar tus pronósticos. ¡Buena suerte!</p></div>';
+      html += '</div>';
+    } else {
+      html += '<p class="payment-amount">Cuota de entrada: <strong>$' + settings.paymentAmount + '</strong></p>';
     }
     html += '</div></div>';
 
-    html += '</div>';
     container.innerHTML = html;
   }
 
@@ -158,28 +197,27 @@ const UI = (function () {
       html += '<span>' + Helpers.formatDateTime(match.dateISO) + '</span>';
       html += Helpers.getStatusBadge(match.status);
       html += '</div>';
-      html += '<div class="match-teams">';
-      html += '<div class="team home-team">' + match.homeTeam + '</div>';
-      html += '<div class="score-display">';
-      if (isFinished && result) {
-        html += '<span class="result-score">' + result.homeScore + ' - ' + result.awayScore + '</span>';
-      } else if (isFinished && !result) {
-        html += '<span class="result-score">? - ?</span>';
-      } else {
-        html += '<span class="vs">VS</span>';
+      if (!canPredict || isFinished) {
+        html += '<div class="match-teams">';
+        html += '<div class="team home-team">' + match.homeTeam + '</div>';
+        html += '<div class="score-display">';
+        if (isFinished && result) {
+          html += '<span class="result-score">' + result.homeScore + ' - ' + result.awayScore + '</span>';
+        } else if (isFinished && !result) {
+          html += '<span class="result-score">? - ?</span>';
+        } else {
+          html += '<span class="vs">VS</span>';
+        }
+        html += '</div>';
+        html += '<div class="team away-team">' + match.awayTeam + '</div>';
+        html += '</div>';
       }
-      html += '</div>';
-      html += '<div class="team away-team">' + match.awayTeam + '</div>';
-      html += '</div>';
 
       if (canPredict && !isFinished) {
         html += '<div class="prediction-form" data-match-id="' + match.id + '">';
-        html += '<div class="input-group">';
-        html += '<input type="number" class="input score-input home-score" min="0" max="20" placeholder="L" value="' + (prediction ? prediction.homeScore : '') + '">';
-        html += '<span class="input-sep">:</span>';
-        html += '<input type="number" class="input score-input away-score" min="0" max="20" placeholder="V" value="' + (prediction ? prediction.awayScore : '') + '">';
-        html += '<button class="btn btn-sm btn-primary save-prediction">Guardar</button>';
-        html += '</div>';
+        html += '<div class="prediction-row"><span class="team-name">' + match.homeTeam + '</span><input type="number" class="input score-input home-score" min="0" max="20" placeholder="0" value="' + (prediction ? prediction.homeScore : '') + '"></div>';
+        html += '<div class="prediction-row"><span class="team-name">' + match.awayTeam + '</span><input type="number" class="input score-input away-score" min="0" max="20" placeholder="0" value="' + (prediction ? prediction.awayScore : '') + '"></div>';
+        html += '<button class="btn btn-primary save-prediction btn-full">Guardar</button>';
         html += '</div>';
       } else if (prediction && !isFinished) {
         html += '<div class="prediction-display">Tu predicción: <strong>' + prediction.homeScore + ' - ' + prediction.awayScore + '</strong></div>';
@@ -201,10 +239,10 @@ const UI = (function () {
     if (canPredict) {
       container.querySelectorAll('.save-prediction').forEach(btn => {
         btn.addEventListener('click', function () {
-          const form = this.closest('.prediction-form');
-          const matchId = parseInt(form.dataset.matchId);
-          const homeScore = parseInt(form.querySelector('.home-score').value);
-          const awayScore = parseInt(form.querySelector('.away-score').value);
+          const card = this.closest('.match-card');
+          const matchId = parseInt(card.querySelector('.prediction-form').dataset.matchId);
+          const homeScore = parseInt(card.querySelector('.home-score').value);
+          const awayScore = parseInt(card.querySelector('.away-score').value);
 
           if (isNaN(homeScore) || isNaN(awayScore)) {
             showToast('Ingresa ambos marcadores', 'error');

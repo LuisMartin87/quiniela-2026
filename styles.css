@@ -240,6 +240,35 @@ textarea.input { resize: vertical; min-height: 80px; }
 }
 .qr-hint { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem; }
 
+/* ── Dashboard Status Table ── */
+.status-table { width: 100%; border-collapse: collapse; }
+.status-table td { padding: 0.35rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+.status-table td:first-child { color: var(--text-muted); padding-right: 1rem; white-space: nowrap; }
+.status-table tr:last-child td { border-bottom: none; }
+
+/* ── Scoring Grid ── */
+.scoring-grid { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.5rem; }
+.scoring-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.5rem; border-radius: var(--radius); background: rgba(255,255,255,0.03); }
+.scoring-icon { font-size: 1.3rem; line-height: 1.4; min-width: 28px; text-align: center; }
+.scoring-item div { flex: 1; }
+.scoring-item strong { display: block; font-size: 0.95rem; }
+.scoring-pts { display: inline-block; background: var(--accent); color: #000; padding: 0.1rem 0.5rem; border-radius: 12px; font-size: 0.8rem; font-weight: 700; margin-top: 0.15rem; }
+.scoring-desc { font-size: 0.8rem; color: var(--text-muted); margin: 0.1rem 0 0; }
+.scoring-subtitle { color: var(--accent); margin: 0.75rem 0 0.5rem; font-size: 1rem; }
+
+/* ── Deadlines ── */
+.deadlines { display: flex; flex-direction: column; gap: 0.5rem; }
+.deadline-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.5rem; border-radius: var(--radius); background: rgba(255,255,255,0.03); }
+.deadline-icon { font-size: 1.2rem; line-height: 1.4; min-width: 28px; text-align: center; }
+.deadline-item div { flex: 1; }
+.deadline-item strong { display: block; font-size: 0.95rem; }
+.deadline-desc { font-size: 0.85rem; color: var(--text-muted); margin: 0.15rem 0 0; }
+
+/* ── Payment ── */
+.payment-amount { font-size: 1.1rem; margin-bottom: 0.5rem; }
+.paid-confirmation { display: flex; align-items: center; gap: 1rem; padding: 0.5rem; border-radius: var(--radius); background: rgba(39,174,96,0.1); border: 1px solid var(--success); }
+.paid-icon { font-size: 2rem; }
+
 /* ── Round Tabs ── */
 .round-tabs {
   display: flex;
@@ -298,12 +327,21 @@ textarea.input { resize: vertical; min-height: 80px; }
 }
 .home-team { text-align: right; }
 .away-team { text-align: left; }
+.prediction-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.3rem 0;
+}
+.prediction-row .team-name { font-weight: 700; font-size: 1rem; }
+.prediction-row .score-input { width: 60px; text-align: center; }
+.prediction-form .btn-full { margin-top: 0.5rem; }
 .score-display { text-align: center; min-width: 70px; }
 .vs { font-size: 1.2rem; font-weight: 700; color: var(--accent); }
 .result-score { font-size: 1.4rem; font-weight: 800; color: var(--accent); }
 
 .prediction-form {
-  padding: 0.75rem 1rem;
+  padding: 0.6rem 1rem;
   border-top: 1px solid var(--border);
 }
 
@@ -319,6 +357,8 @@ textarea.input { resize: vertical; min-height: 80px; }
   padding: 0.4rem;
   font-size: 1.1rem;
 }
+
+.btn-full { width: 100%; }
 
 .prediction-display {
   padding: 0.6rem 1rem;
@@ -709,4 +749,7 @@ textarea.input { resize: vertical; min-height: 80px; }
   .match-card .match-header { font-size: 0.75rem; }
   .result-score { font-size: 1.2rem; }
   .score-input { width: 45px; font-size: 1rem; }
+  .scoring-item { padding: 0.4rem; }
+  .deadline-item { padding: 0.4rem; }
+  .paid-confirmation { flex-direction: column; text-align: center; }
 }

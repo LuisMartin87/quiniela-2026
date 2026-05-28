@@ -118,7 +118,7 @@ const API = (function () {
 
   function getUserById(id) {
     const users = getUsers();
-    return users.find(u => u.id === id) || null;
+    return users.find(u => u.id == id) || null;
   }
 
   function getUserByUsername(username) {
