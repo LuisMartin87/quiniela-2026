@@ -114,16 +114,21 @@
         const whatsapp = document.getElementById('regWhatsapp').value.trim();
         const errorEl = document.getElementById('registerError');
 
-        const result = await API.registerUser({ username: username, password: password, whatsapp: whatsapp });
-        if (result.success) {
-          errorEl.style.color = 'var(--success)';
-          errorEl.textContent = '¡Registro exitoso! Ahora puedes iniciar sesión.';
-          document.getElementById('registerForm').style.display = 'none';
-          document.getElementById('loginForm').style.display = 'block';
-          document.getElementById('loginUsername').value = username;
-        } else {
-          errorEl.style.color = 'var(--danger)';
-          errorEl.textContent = result.error;
+        try {
+          const result = await API.registerUser({ username: username, password: password, whatsapp: whatsapp });
+          if (result.success) {
+            errorEl.style.color = 'var(--success)';
+            errorEl.textContent = '¡Registro exitoso! Ahora puedes iniciar sesión.';
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('loginUsername').value = username;
+          } else {
+            errorEl.style.color = 'var(--danger)';
+            errorEl.textContent = result.error;
+          }
+        } catch (e) {
+          errorEl.textContent = 'Error de conexión con el servidor. Verifica la URL del backend.';
+          console.error(e);
         }
       });
     });

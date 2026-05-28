@@ -59,6 +59,20 @@ const Backend = (function () {
     return BASE_URL.length > 0;
   }
 
+  function getStorageValue(key) {
+    try { var r = localStorage.getItem(key); return r ? JSON.parse(r) : null; } catch (e) { return null; }
+  }
+
+  var SEED_MAP = {};
+  function initSeedMap() {
+    var K = APP.STORAGE_KEYS;
+    var J = APP.JSON_FILES;
+    SEED_MAP[K.MATCHES] = J.MATCHES;
+    SEED_MAP[K.PLAYERS] = J.PLAYERS;
+    SEED_MAP[K.SETTINGS] = J.SETTINGS;
+    SEED_MAP[K.USERS] = J.USERS;
+  }
+
   async function fetchAll() {
     var res = await fetch(BASE_URL + '?action=getAll');
     var data = await res.json();
@@ -85,6 +99,23 @@ const Backend = (function () {
         localStorage.setItem(key, JSON.stringify(map[key]));
       }
     });
+    initSeedMap();
+    await Promise.all(Object.keys(SEED_MAP).map(async function (key) {
+      var val = getStorageValue(key);
+      var empty = !val || (Array.isArray(val) && val.length === 0);
+      if (!empty) return;
+      try {
+        var jsonFile = SEED_MAP[key];
+        var r = await fetch(jsonFile);
+        var jsonData = await r.json();
+        if (jsonData && (!Array.isArray(jsonData) || jsonData.length > 0)) {
+          localStorage.setItem(key, JSON.stringify(jsonData));
+          syncKey(key);
+        }
+      } catch (e) {
+        console.warn('Could not seed ' + key + ' from ' + SEED_MAP[key], e);
+      }
+    }));
     localStorage.setItem(K.INITIALIZED, 'true');
   }
 
