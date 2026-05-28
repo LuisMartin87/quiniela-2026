@@ -138,21 +138,35 @@ function syncCollection(body) {
 function handleLogin(body) {
   var users = readCollection(SHEET.USERS);
   var user = null;
+  var debugInfo = { totalUsers: users.length, bodyUsername: body.username, bodyPassword: body.password, checked: [] };
   for (var i = 0; i < users.length; i++) {
     var u = users[i];
-    Logger.log('Checking user: username="' + u.username + '" password="' + u.password + '" active="' + u.active + '"');
-    if (String(u.username).trim() === String(body.username).trim() && String(u.password) === String(body.password)) {
+    var uName = String(u.username);
+    var uPass = String(u.password);
+    var bName = String(body.username);
+    var bPass = String(body.password);
+    var nameMatch = uName.trim() === bName.trim();
+    var passMatch = uPass === bPass;
+    debugInfo.checked.push({
+      storedUsername: uName,
+      storedPassword: uPass,
+      nameMatch: nameMatch,
+      passMatch: passMatch,
+      nameTrimmed: uName.trim(),
+      bodyNameTrimmed: bName.trim()
+    });
+    if (nameMatch && passMatch) {
       user = u;
       break;
     }
   }
   if (!user) {
-    Logger.log('Login failed. Looking for username="' + body.username + '" password="' + body.password + '" in ' + users.length + ' users');
-    return { success: false, error: 'Usuario o contraseña inválidos' };
+    debugInfo.result = 'no_match';
+    return { success: false, error: 'Usuario o contraseña inválidos', debug: debugInfo };
   }
-  if (user.active !== true && user.active !== 'TRUE' && user.active !== 'true') {
-    Logger.log('User "' + body.username + '" is inactive (active="' + user.active + '")');
-    return { success: false, error: 'Tu cuenta está inactiva. Contacta al administrador.' };
+  var isActive = user.active === true || user.active === 'TRUE' || user.active === 'true';
+  if (!isActive) {
+    return { success: false, error: 'Tu cuenta está inactiva. Contacta al administrador.', debug: { active: user.active } };
   }
   var token = Utilities.getUuid();
   var sessions = readCollection(SHEET.SESSIONS);
