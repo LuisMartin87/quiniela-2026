@@ -678,15 +678,15 @@
       let html = '<div class="admin-section"><h3>⚠️ Zona de Peligro</h3>';
       html += '<div class="card card-danger"><div class="card-body">';
       html += '<h4>Reiniciar Todos los Datos</h4>';
-      html += '<p class="text-warning">Esto eliminará predicciones, resultados, configuración y sesiones de usuarios. Se conservarán las cuentas de usuario (incluyendo admin), las jornadas, los jugadores y los equipos.</p>';
+      html += '<p class="text-warning">Elimina predicciones, resultados, especiales y sesiones. <strong>Borra todos los usuarios no-admin.</strong> Se conservan admins, jornadas, jugadores y equipos.</p>';
       html += '<button class="btn btn-danger" id="resetAllBtn">🗑️ Reiniciar Todo</button>';
       html += '</div></div></div>';
       container.innerHTML = html;
 
       document.getElementById('resetAllBtn').addEventListener('click', function () {
         if (confirm('¿Estás seguro de eliminar TODOS los datos? ¡Esta acción no se puede deshacer!')) {
-          if (confirm('¿REALMENTE seguro? Se perderán predicciones, resultados y configuración. Las cuentas de usuario, jornadas y jugadores se conservan.')) {
-            API.resetAll();
+          if (confirm('¿REALMENTE seguro? Se eliminarán TODOS los usuarios no-admin, predicciones, resultados y especiales. Solo admins, jornadas y jugadores se conservan.')) {
+            await API.resetAll();
             UI.showToast('¡Todos los datos reiniciados! Actualizando...', 'success');
             setTimeout(function () { location.reload(); }, 1500);
           }

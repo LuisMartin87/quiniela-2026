@@ -639,17 +639,28 @@ const API = (function () {
 
   /* ── Reset ── */
 
-  function resetAll() {
-    var keep = [K.USERS, K.MATCHES, K.PLAYERS, K.INITIALIZED];
-    Object.values(K).forEach(function (key) {
-      if (keep.indexOf(key) === -1) {
-        localStorage.removeItem(key);
-      }
-    });
+  async function resetAll() {
+    var volatileKeys = [K.RESULTS, K.PREDICTIONS, K.SPECIAL_PREDICTIONS];
+    volatileKeys.forEach(function (key) { localStorage.removeItem(key); });
+    localStorage.removeItem(K.SESSION);
+    localStorage.removeItem(K.SESSION + '_token');
+
+    var users = getUsers();
+    var adminUsers = users.filter(function (u) { return u.admin === true || u.admin === 'true'; });
+    setItem(K.USERS, adminUsers);
+
+    var settings = getSettings();
+    settings.officialSpecials = {};
+    setItem(K.SETTINGS, settings);
+
     if (backendMode) {
-      Backend.resetVolatile();
+      await Backend.syncCollection('results', []);
+      await Backend.syncCollection('predictions', []);
+      await Backend.syncCollection('specialPredictions', []);
+      await Backend.syncCollection('sessions', []);
     }
-    return { success: true, message: 'Datos de usuarios reiniciados. Se conservan cuentas, jornadas y jugadores.' };
+
+    return { success: true, message: 'App reiniciada. Solo admins conservados. Partidos, jugadores y rondas intactos.' };
   }
 
   return {
