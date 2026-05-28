@@ -12,6 +12,7 @@
     <div class="loader-field"></div>
     <div class="loader-text">Preparando el terreno<span class="loader-dots"></span></div>
   </div>
+  <script>setTimeout(function(){var l=document.getElementById('appLoader');if(l)l.classList.add('hidden')}, 20000);</script>
   <div class="auth-container">
     <div class="auth-card card">
       <div class="auth-header">
@@ -92,11 +93,16 @@
         const username = document.getElementById('loginUsername').value.trim();
         const password = document.getElementById('loginPassword').value;
         const errorEl = document.getElementById('loginError');
+        const btn = this;
 
         if (!username || !password) {
           errorEl.textContent = 'Ingresa usuario y contraseña';
           return;
         }
+
+        btn.disabled = true;
+        btn.textContent = '⏳ Ingresando...';
+        errorEl.textContent = '';
 
         try {
           const result = await API.login(username, password);
@@ -108,6 +114,9 @@
         } catch (e) {
           errorEl.textContent = 'Error de conexión con el servidor. Verifica la URL del backend.';
           console.error(e);
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Iniciar Sesión';
         }
       });
 
@@ -120,6 +129,11 @@
         const password = document.getElementById('regPassword').value;
         const whatsapp = document.getElementById('regWhatsapp').value.trim();
         const errorEl = document.getElementById('registerError');
+        const btn = this;
+
+        btn.disabled = true;
+        btn.textContent = '⏳ Registrando...';
+        errorEl.textContent = '';
 
         try {
           const result = await API.registerUser({ username: username, password: password, whatsapp: whatsapp });
@@ -136,6 +150,9 @@
         } catch (e) {
           errorEl.textContent = 'Error de conexión con el servidor. Verifica la URL del backend.';
           console.error(e);
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Registrarse';
         }
       });
     });
