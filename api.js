@@ -170,6 +170,16 @@ const API = (function () {
     return { success: true };
   }
 
+  function deleteUser(userId) {
+    const users = getUsers();
+    const idx = users.findIndex(u => u.id === userId);
+    if (idx === -1) return { success: false, error: 'Usuario no encontrado' };
+    if (users[idx].admin) return { success: false, error: 'No puedes eliminar un administrador' };
+    users.splice(idx, 1);
+    setItem(K.USERS, users);
+    return { success: true };
+  }
+
   function createUser(data) {
     const users = getUsers();
     if (getUserByUsername(data.username)) {
@@ -655,6 +665,7 @@ const API = (function () {
     getUserByUsername: getUserByUsername,
     registerUser: registerUser,
     updateUserStatus: updateUserStatus,
+    deleteUser: deleteUser,
     createUser: createUser,
     getMatches: getMatches,
     getMatchById: getMatchById,

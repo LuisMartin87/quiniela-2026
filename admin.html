@@ -156,7 +156,8 @@
         html += '<td>' + (u.admin ? '✅' : '') + '</td>';
         html += '<td class="action-cell">';
         html += '<button class="btn btn-sm ' + (u.active ? 'btn-warning' : 'btn-success') + '" data-user-id="' + u.id + '" data-action="toggle-active">' + (u.active ? 'Desactivar' : 'Activar') + '</button> ';
-        html += '<button class="btn btn-sm ' + (u.paid ? 'btn-warning' : 'btn-success') + '" data-user-id="' + u.id + '" data-action="toggle-paid">' + (u.paid ? 'Desmarcar Pago' : 'Marcar Pagado') + '</button>';
+        html += '<button class="btn btn-sm ' + (u.paid ? 'btn-warning' : 'btn-success') + '" data-user-id="' + u.id + '" data-action="toggle-paid">' + (u.paid ? 'Desmarcar Pago' : 'Marcar Pagado') + '</button> ';
+        html += !u.admin ? '<button class="btn btn-sm btn-danger" data-user-id="' + u.id + '" data-action="delete-user">Eliminar</button>' : '';
         html += '</td>';
         html += '</tr>';
       });
@@ -200,6 +201,16 @@
             API.updateUserStatus(userId, { paid: !user.paid });
             UI.showToast('Estado de pago actualizado', 'success');
             renderAdminUsers();
+          } else if (action === 'delete-user') {
+            if (confirm('¿Eliminar este usuario permanentemente?')) {
+              const result = API.deleteUser(userId);
+              if (result.success) {
+                UI.showToast('Usuario eliminado', 'success');
+                renderAdminUsers();
+              } else {
+                UI.showToast(result.error, 'error');
+              }
+            }
           }
         });
       });
