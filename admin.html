@@ -7,6 +7,11 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div id="appLoader">
+    <div class="loader-ball">⚽</div>
+    <div class="loader-field"></div>
+    <div class="loader-text">Preparando el terreno<span class="loader-dots"></span></div>
+  </div>
   <div id="adminNav"></div>
   <div id="toastContainer"></div>
 
@@ -50,6 +55,8 @@
       } catch (e) {
         document.body.innerHTML = '<div class="error-screen"><h1>⚠️ Error</h1><p>' + e.message + '</p></div>';
         return;
+      } finally {
+        document.getElementById('appLoader').classList.add('hidden');
       }
 
       if (!API.isLoggedIn()) {
@@ -683,7 +690,7 @@
       html += '</div></div></div>';
       container.innerHTML = html;
 
-      document.getElementById('resetAllBtn').addEventListener('click', function () {
+      document.getElementById('resetAllBtn').addEventListener('click', async function () {
         if (confirm('¿Estás seguro de eliminar TODOS los datos? ¡Esta acción no se puede deshacer!')) {
           if (confirm('¿REALMENTE seguro? Se eliminarán TODOS los usuarios no-admin, predicciones, resultados y especiales. Solo admins, jornadas y jugadores se conservan.')) {
             await API.resetAll();

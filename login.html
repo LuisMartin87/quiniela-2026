@@ -7,6 +7,11 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="auth-body">
+  <div id="appLoader">
+    <div class="loader-ball">⚽</div>
+    <div class="loader-field"></div>
+    <div class="loader-text">Preparando el terreno<span class="loader-dots"></span></div>
+  </div>
   <div class="auth-container">
     <div class="auth-card card">
       <div class="auth-header">
@@ -60,6 +65,8 @@
       } catch (e) {
         document.getElementById('loginError').textContent = 'Error al cargar la aplicación. Verifica que los archivos JSON existan.';
         return;
+      } finally {
+        document.getElementById('appLoader').classList.add('hidden');
       }
 
       if (API.isLoggedIn()) {

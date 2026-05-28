@@ -21,6 +21,9 @@ const App = (function () {
     } catch (err) {
       console.error('Error de inicialización:', err);
       document.body.innerHTML = '<div class="error-screen"><h1>⚠️ Error</h1><p>' + err.message + '</p><button onclick="location.reload()" class="btn btn-primary">Reintentar</button></div>';
+    } finally {
+      var loader = document.getElementById('appLoader');
+      if (loader) loader.classList.add('hidden');
     }
   }
 
